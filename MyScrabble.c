@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
@@ -10,17 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BUF_SIZE	2
+//notes going to change and use the UDP cause the TCP is not working
+
+#define BUF_SIZE	1
+
+#define LISTEN_PORT	60000
 
 void getNewBoard();
 void drawBoard();
 void makePlay(int x, int y, char* c);
 int SCRABBLE_LETTER_VALUES(char letterValue);
-void tcpServer();
-int createTCPServerSocket(unsigned short port);
-void  handleTCPClient(int client_socket);
-int acceptTCPConnection(int server_socket);
+void udpServer();
 
+struct mesg
+{
+  char *message[4];
+};
 /*
 * Services the server should provide:
 *   Draw the board which would include placing new moves
@@ -34,12 +40,13 @@ int k,j;
 //global declaration structure grid
 char * grid[NUM_RANGE][NUM_RANGE];
 int running = 1 ;
+char* letter;
 
 int main()
 {
 
 //calling the functions
-    tcpServer();
+    udpServer();
 
     //making two plays
     //makePlay(3,7,"a");
@@ -182,137 +189,128 @@ int SCRABBLE_LETTER_VALUES(char letterValue)
     }
     return value;
 }
-// TCP Server Functions
-void tcpServer()
+// UDP Server Functions
+void udpServer()
 {
-    int *serverSock; //aka the descriptor for the sock
-    int maxDesc;  //max socket descriptor value
-    fd_set sockSet; // add a descriptor to the vector table
-    int const noPort = 2;
-    int c1_port = 60000, c2_port = 60001;
+  int			sock_recv;
+  struct sockaddr_in	my_addr;
+  int			i;
+  fd_set	readfds,active_fd_set,read_fd_set;
+  //struct timeval		timeout={0,0};
+  int	incoming_len;
+  struct sockaddr_in	remote_addr;
+  int			recv_msg_size;
+  char			buf[BUF_SIZE];
+  int			select_ret;
+  struct mesg messages;
 
-    getNewBoard();
-    //Displaying empty board
-    printf("\n%s\n\n","Printing an empty board....");
-    drawBoard();
+  getNewBoard();
 
-    //allocate memory for the number sockets for the incoming connections
-    serverSock = (int *) malloc( noPort * sizeof(int));
+  //Displaying empty board
+  printf("\n%s\n\n","Printing an empty board....");
+  drawBoard();
 
-    // creating two server sockets so that the clients can connect
-    // to one each
-    serverSock[0] = createTCPServerSocket(c1_port);
-    maxDesc = serverSock[0];
-    serverSock[1] = createTCPServerSocket(c2_port);
-    if (maxDesc < serverSock[1])
-        maxDesc = serverSock[1];
+  sock_recv=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock_recv < 0){
+      printf("socket() failed\n");
+      exit(0);
+  }
+  memset(&my_addr, 0, sizeof (my_addr));	/* zero out structure */
+  my_addr.sin_family = AF_INET;	/* address family */
+  my_addr.sin_addr.s_addr = htonl(INADDR_ANY);  /* current machine IP */
+  my_addr.sin_port = htons((unsigned short)LISTEN_PORT);
+      /* bind socket to the local address */
+  i=bind(sock_recv, (struct sockaddr *) &my_addr, sizeof (my_addr));
+  if (i < 0){
+      printf("bind() failed\n");
+      exit(0);
+  }
+     FD_ZERO(&readfds);		/* zero out socket set */
+     FD_SET(sock_recv,&readfds);	/* add socket to listen to */
 
-    while(running)
-    {
-        FD_ZERO(&sockSet);
-        FD_SET(serverSock[0], &sockSet);//descriptor to the vector
-        FD_SET(serverSock[1], &sockSet);
+      /* listen ... */
+  while (running)
+  {
+      read_fd_set = active_fd_set;
+      select_ret=select(sock_recv+1,&readfds,NULL,NULL,NULL);
 
-        if (select(maxDesc+1,&sockSet,NULL,NULL,NULL) < 0)
-            printf("\nselect() in tcpServer failed\n");
-        else
-        {
-            //FD_ISSET test whether the fd is apart of the set
-            for (int i ;  i < 2 ; i++)
-            {
-                if (FD_ISSET(serverSock[i], &sockSet))
+      if (select_ret > 0)
+      {
+
+
+          for(int i = 0 ; i < 4; i++)
+          {
+                incoming_len=sizeof(remote_addr);
+                recv_msg_size=recvfrom(sock_recv,buf,sizeof(char),MSG_WAITALL,(struct sockaddr *)&remote_addr,&incoming_len);
+
+                if (recv_msg_size > 0)
                 {
-                    handleTCPClient(acceptTCPConnection(serverSock[i]));
-                    if (running)
-                    {
-                        printf("\n%s\n\n","RePrinting board after plays....");
-                        drawBoard();
-                    }
+                  printf("\nbuf val: %s ",buf);
+                  memset(buf,'\0',strlen(buf)-1);
+                  //buf[recv_msg_size]='\0';
+                  messages.message[i] = strdup(buf);
+                  printf("\n%s %d ",messages.message[i],i);
                 }
-            }
+          }
+
+            if (strcmp(messages.message[3],"n")!=0)
+            {
+
+                // make play x y letter
+                int x  = atoi(messages.message[0]);
+                int y  = atoi(messages.message[1]);
+
+                //char letter = messages[2].message[0];
+                printf("\n%d %d %s",x,y,messages.message[2]);
+                makePlay(x,y,messages.message[2]);
+                printf("\n%s\n\n","RePrinting board after plays....");
+                //redrawing the board with plays shown
+                drawBoard();
+              }
+              else
+                running = 0; //no longer running
 
         }
+  }
 
-    }
-    close(serverSock[0]);
-    close(serverSock[1]);
-
-    free(serverSock);
-
-    exit(0);
-
-}
-int createTCPServerSocket(unsigned short port)
-{
-    int sock;
-    struct sockaddr_in serv_addr; //hold the local addresss
-
-    //create the socket for the incoming connections
-    if ( (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 )
-        printf("\nsocket() failed\n");
-
-    memset(&serv_addr, 0 , sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); //*
-    serv_addr.sin_port = htons(port);
-
-    //bind the local addresss
-    if (bind(sock, (struct sockaddr *)&serv_addr,sizeof(serv_addr)))
-        printf("\nbind() in createTCPServerSocket failed\n");
-
-    if ( listen(sock, 5) < 0)
-        printf("\nlisten() in createTCPServerSocket failed\n");
-
-    return sock;
+  close(sock_recv);
 }
 
+/*
 void  handleTCPClient(int client_socket)
 {
-    char  x_cordinate, y_cordinate
-    , letter, playing;
-    int  recvMsgSize;
+    int		incoming_len, recv_msg_size;
+    struct mesg messages[4];
     struct sockaddr_in	remote_addr;
-    int len  = sizeof(remote_addr);
-    //recieve message from client
-     recvMsgSize = recvfrom(client_socket,x_cordinate,sizeof(char ),MSG_WAITALL,(struct sockaddr *)&remote_addr,&len);
-     if (recvMsgSize > 0)
-        //x_cordinate[recvMsgSize] = '\0';
+    char buf[10];
+    //collect the client input
+    for (int x = 0 ; x < 4 ; x++)
+    {
+      memset(buf, '\0', sizeof(buf));
+      incoming_len=sizeof(remote_addr);
+      recv_msg_size=recvfrom(client_socket,buf,1,0,(struct sockaddr *)&remote_addr,&incoming_len);
 
-     recvMsgSize=recvfrom(client_socket,y_cordinate,sizeof(char ),MSG_WAITALL,(struct sockaddr *)&remote_addr,&len);
-     if (recvMsgSize > 0)
-        //y_cordinate[recvMsgSize] = '\0';
-     recvMsgSize=recvfrom(client_socket,letter,sizeof(char ),MSG_WAITALL,(struct sockaddr *)&remote_addr,&len);
-     if (recvMsgSize > 0)
-        //letter[recvMsgSize] = '\0';
-     recvMsgSize=recvfrom(client_socket,playing,sizeof(char ),MSG_WAITALL,(struct sockaddr *)&remote_addr,&len);
-     if (recvMsgSize > 0)
-      //playing[recvMsgSize] = '\0';
+      if (recv_msg_size > 0)
+      {
 
-      printf("%c %c %c %c",x_cordinate,y_cordinate,letter,playing);
-    //we need to make the play
-    if (playing !='n')
-     makePlay( (x_cordinate - '0'), (y_cordinate - '0'),letter);
+          //buf[recv_msg_size]= 0;
+          strcpy(messages[x].message,buf);
+          printf("recieved: %s, %d\n",messages[x].message,x);
+      }
+
+    }
+    if (strcmp(messages[3].message,"n")!=0)
+    {
+
+      // make play x y letter
+      int x  = (messages[0].message[0]) - '0';
+      int y  = (messages[1].message[0]) - '0';
+      strcpy(letter, messages[2].message);
+
+      //char letter = messages[2].message[0];
+      printf("\n%d %d %s",x,y,letter);
+      makePlay(x,y,letter);
+    }
     else
-        running = 0 ;
-
-     close(client_socket);
-
-}
-
-int acceptTCPConnection(int server_socket)
-{
-
-    int client_socket;
-    struct sockaddr_in clnt_addr ;
-    unsigned int len;
-
-    //size of I/O parameter
-    len = sizeof(clnt_addr);
-
-    if ((client_socket = accept(server_socket,(struct sockaddr *)&clnt_addr,&len))< 0)
-        printf("\naccept() in acceptTCPConnection failed\n");
-
-    //now the client socket is connected
-    //printf("Handling client %s\n", inet_ntoa(clnt_addr.sin_addr)) ;
-    return client_socket;
-}
+      running = 0; //no longer running
+}*/
