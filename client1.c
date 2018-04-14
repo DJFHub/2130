@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+qw#define _GNU_SOURCE
 #include <stdio.h>
 #include <sys/types.h>//system type definitions
 #include <sys/socket.h>//network system functions

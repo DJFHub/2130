@@ -22,6 +22,12 @@ void drawBoard();
 void makePlay(int x, int y, char* c);
 int SCRABBLE_LETTER_VALUES(char letterValue);
 void udpServer();
+void startBoard();
+// returns a character from the alphabet
+//used as a helper function with startBoard
+char *getAsciiVal(int value);
+
+int isOnBoard(int x , int y)
 
 struct mesg
 {
@@ -203,9 +209,9 @@ void udpServer()
   char			buf[BUF_SIZE];
   int			select_ret;
   struct mesg messages;
-
   getNewBoard();
-
+  //randomly generate letters on board
+  startBoard();
   //Displaying empty board
   printf("\n%s\n\n","Printing an empty board....");
   drawBoard();
@@ -249,7 +255,9 @@ void udpServer()
                   memset(buf,'\0',strlen(buf)-1);
                   //buf[recv_msg_size]='\0';
                   messages.message[i] = strdup(buf);
-                  printf("\n%s %d ",messages.message[i],i);
+                  //strup() is used instead of strcpy, returns a pointer
+                  // to the string, used to avoid memory leaks
+                  //printf("\n%s %d ",messages.message[i],i);
                 }
           }
 
@@ -261,11 +269,25 @@ void udpServer()
                 int y  = atoi(messages.message[1]);
 
                 //char letter = messages[2].message[0];
-                printf("\n%d %d %s",x,y,messages.message[2]);
-                makePlay(x,y,messages.message[2]);
-                printf("\n%s\n\n","RePrinting board after plays....");
-                //redrawing the board with plays shown
-                drawBoard();
+                //printf("\n%d %d %s",x,y,messages.message[2]);
+                /*------------------comment------------------------
+                  Should check if the x and y coordinates to valid before
+                  making the play
+                */
+                if (isOnBoard(x,y))
+                {
+                  makePlay(x,y,messages.message[2]);
+                  printf("\n%s\n\n","RePrinting board after plays....");
+                  //redrawing the board with plays shown
+                  drawBoard();
+                  //should send a message to the client letting them
+                  //know the play was valid 
+                }
+                /*--------------------comment-------------------------
+                  else  send some message to back to the client letting them
+                  know that the play was invalid
+
+                */
               }
               else
                 running = 0; //no longer running
@@ -275,42 +297,126 @@ void udpServer()
 
   close(sock_recv);
 }
-
-/*
-void  handleTCPClient(int client_socket)
+void startBoard()
 {
-    int		incoming_len, recv_msg_size;
-    struct mesg messages[4];
-    struct sockaddr_in	remote_addr;
-    char buf[10];
-    //collect the client input
-    for (int x = 0 ; x < 4 ; x++)
-    {
-      memset(buf, '\0', sizeof(buf));
-      incoming_len=sizeof(remote_addr);
-      recv_msg_size=recvfrom(client_socket,buf,1,0,(struct sockaddr *)&remote_addr,&incoming_len);
+  //This function uses the board to randomly position 10 letters on the
+  //boardt
+  time_t t;
+  int x,y;//coordinates
+  int ascii; //ascii value
+  char *c ;
+  int maxAscii = 122;
+  int minAscii = 97;
+  //the board range
+  int minPos = 1;
+  int maxPos = 8;
+  for (int i = 0 ; i < 10 ; i++)
+  {
+    //maximumvalue + rand() / (RAND_MAX / (minimumValue - maximumvalue + 1) + 1)
+    x = maxPos+rand()/(RAND_MAX / (minPos - maxPos + 1) + 1);
+    y = maxPos+rand()/(RAND_MAX / (minPos - maxPos + 1) + 1);
 
-      if (recv_msg_size > 0)
-      {
+    ascii = maxAscii + rand()/(RAND_MAX/ (minAscii- maxAscii + 1)+1);
+    c = getAsciiVal(ascii);
+    makePlay(x,y,c);
+  }
 
-          //buf[recv_msg_size]= 0;
-          strcpy(messages[x].message,buf);
-          printf("recieved: %s, %d\n",messages[x].message,x);
-      }
+}
+char *getAsciiVal(int value)
+{
+  char* c ;
 
-    }
-    if (strcmp(messages[3].message,"n")!=0)
-    {
+  switch(value)
+  {
+    case 97:
+    c = "a";
+    break;
+    case 98:
+    c = "b";
+    break;
+    case 99:
+    c = "c";
+    break;
+    case 100:
+    c = "d";
+    break;
+    case 101:
+    c = "e";
+    break;
+    case 102:
+    c = "f";
+    break;
+    case 103:
+    c = "g";
+    break;
+    case 104:
+    c = "h";
+    break;
+    case 105:
+    c = "i";
+    break;
+    case 106:
+    c = "j";
+    break;
+    case 107:
+    c = "k";
+    break;
+    case 108:
+    c = "l";
+    break;
+    case 109:
+    c = "n";
+    break;
+    case 110:
+    c = "m";
+    break;
+    case 111:
+    c = "o";
+    break;
+    case 112:
+    c = "p";
+    break;
+    case 113:
+    c = "q";
+    break;
+    case 114:
+    c = "r";
+    break;
+    case 115:
+    c = "s";
+    break;
+    case 116:
+    c = "t";
+    break;
+    case 117:
+    c = "u";
+    break;
+    case 118:
+    c = "v";
+    break;
+    case 119:
+    c = "w";
+    break;
+    case 120:
+    c = "x";
+    break;
+    case 121:
+    c = "y";
+    break;
+    case 122:
+    c = "z";
+    break;
+  }
 
-      // make play x y letter
-      int x  = (messages[0].message[0]) - '0';
-      int y  = (messages[1].message[0]) - '0';
-      strcpy(letter, messages[2].message);
+return c;
+}
+int isOnBoard(int x , int y)
+{
+  int booleanValue = 1;// 0 is false and 1 is true
 
-      //char letter = messages[2].message[0];
-      printf("\n%d %d %s",x,y,letter);
-      makePlay(x,y,letter);
-    }
-    else
-      running = 0; //no longer running
-}*/
+  if ( (x < 1 || x > 8) || ( y < 1 || y > 8 ) )
+  {
+    booleanValue  = 0;
+  }
+  return booleanValue;
+}
