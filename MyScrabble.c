@@ -27,7 +27,7 @@ void startBoard();
 //used as a helper function with startBoard
 char *getAsciiVal(int value);
 
-int isOnBoard(int x , int y)
+int isOnBoard(int x , int y);
 
 struct mesg
 {
@@ -204,7 +204,7 @@ void udpServer()
   fd_set	readfds,active_fd_set,read_fd_set;
   //struct timeval		timeout={0,0};
   int	incoming_len;
-  struct sockaddr_in	remote_addr;
+  struct sockaddr_in	remote_addr, client1_addr , client2_addr;
   int			recv_msg_size;
   char			buf[BUF_SIZE];
   int			select_ret;
@@ -281,7 +281,7 @@ void udpServer()
                   //redrawing the board with plays shown
                   drawBoard();
                   //should send a message to the client letting them
-                  //know the play was valid 
+                  //know the play was valid
                 }
                 /*--------------------comment-------------------------
                   else  send some message to back to the client letting them
