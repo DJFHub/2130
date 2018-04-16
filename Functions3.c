@@ -91,29 +91,29 @@ int SCRABBLE_LETTER_VALUES(char letterValue)
 }
 
 int calculateScore(char *word)
-{ 
+{
   char *ptr;
   ptr = word;
   int score = 0;
   int i =0;
-  
+
   //Iterates through word and adds the value of each character to score
   for(i=0; word[i]!= '\0';i++)
   {
-   score += SCRABBLE_LETTER_VALUES(word[i]);  
+   score += SCRABBLE_LETTER_VALUES(word[i]);
    ptr++;
   }
-   printf("Word values %d points!\n",score); 
+  //printf("Word values %d points!\n",score);
 
-  return 0;
+  return score;
 }
 
 int calculateTotalScore(char *word)
 {
-	
-}	
+
+}
 int main()
-{ 
+{
   char ch[] = "AMERICAN";   //Test1: random string to test if code works
   calculateScore(ch);
-}	
+}
