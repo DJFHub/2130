@@ -475,7 +475,7 @@ void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
                 //printf("\nsize: %d ",recv_msg_size);
                 if (recv_msg_size > 0)
                 {
-                  printf("\nbuf val: %s ",buf);
+                  //printf("\nbuf val: %s ",buf);
                   memset(buf,'\0',strlen(buf)-1);
                   //buf[recv_msg_size]='\0';
                   messages.message[i] = strdup(buf);
@@ -549,7 +549,32 @@ void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
                 */
               }
               else
+              {
                 running = 0; //no longer running
+                //who wanted to quit ?
+                if (isPlayerOne == 1)
+                {
+                  //tell player 2 that the game is over
+                  //ok so when a 2 is sent the player will
+                  // that player 1 quit
+                  printf("\nPlayer 1 quit the game\n");
+                  strcpy(buf,"2");
+                  addr_len = sizeof((*player2));
+                  //susupend player 2
+                  sendto(sock_recv, buf, strlen(buf)+1,0,(struct sockaddr *)player2, addr_len);
+
+
+                }
+                else if (isPlayerTwo == 1)
+                {
+                  printf("\nPlayer 2 quit the game\n");
+                  strcpy(buf,"2");
+                  addr_len = sizeof((*player1));
+                  //enable
+                  sendto(sock_recv, buf, strlen(buf)+1,0,(struct sockaddr *)player1,addr_len);
+                }
+              }
+
 
         }
   }
