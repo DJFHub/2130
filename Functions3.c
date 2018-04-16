@@ -95,6 +95,7 @@ int calculateScore(char *word)
   char *ptr;
   ptr = word;
   int score = 0;
+  int total_score = 0;
   int i =0;
   
   //Iterates through word and adds the value of each character to score
@@ -104,10 +105,10 @@ int calculateScore(char *word)
    ptr++;
   }
    printf("Word values %d points!\n",score); 
-
+   total_score += score;
+  // printf("FinalScore: %d\n",total_score);
   return 0;
-}
-
+ }	
 int calculateTotalScore(char *word)
 {
 	
