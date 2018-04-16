@@ -95,6 +95,7 @@ int calculateScore(char *word)
   char *ptr;
   ptr = word;
   int score = 0;
+  int total_score = 0;
   int i =0;
 
   //Iterates through word and adds the value of each character to score
@@ -103,11 +104,19 @@ int calculateScore(char *word)
    score += SCRABBLE_LETTER_VALUES(word[i]);
    ptr++;
   }
+<<<<<<< HEAD
   //printf("Word values %d points!\n",score);
 
   return score;
 }
 
+=======
+   printf("Word values %d points!\n",score); 
+   total_score += score;
+  // printf("FinalScore: %d\n",total_score);
+  return 0;
+ }	
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
 int calculateTotalScore(char *word)
 {
 

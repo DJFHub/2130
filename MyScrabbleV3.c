@@ -29,12 +29,15 @@ int			select_ret;
 struct  mesg messages;
 pid_t   parentProcess = -1;
 
+<<<<<<< HEAD
 int isPlayerOne = 1;//true
 int isPlayerTwo = 0;//false
 
 int PlayerOneScore = 0;
 int PlayerTwoScore = 0;
 
+=======
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
 void getNewBoard();
 void drawBoard();
 void makePlay(int x, int y, char* c);
@@ -49,6 +52,7 @@ char *getAsciiVal(int value);
 
 int isOnBoard(int x , int y);
 
+<<<<<<< HEAD
 #define WORDCOUNT 83667
 int foundWords = 0 ;
 char* isWord(int x , int y);
@@ -65,6 +69,8 @@ struct Dictionary
 
 } dictionary[WORDCOUNT],wordsFound[100];
 
+=======
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
 struct mesg
 {
   char *message[4];
@@ -86,9 +92,14 @@ char* letter;
 
 int main()
 {
+<<<<<<< HEAD
   //parentProcess = getpid();
 //calling the functions
     makeDictionary();
+=======
+  parentProcess = getpid();
+//calling the functions
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
     udpServer();
 
     //making two plays
@@ -232,6 +243,51 @@ int SCRABBLE_LETTER_VALUES(char letterValue)
     }
     return value;
 }
+<<<<<<< HEAD
+=======
+
+char isWord(x_cord,y_cord,letter, grid[NUM_RANGE][NUM_RANGE])
+{
+	for(i=x_cord;i <NUM_RANGE; i++)
+	{
+		while grid[i][y_cord]!= NULL
+		{
+			word += grid[i][y_cord];
+		}
+		i++;
+	}
+	
+	for(i=x_cord, i< NUM_RANGE; i--)
+	{
+		while grid[i][y_cord] != NULL
+		{
+			word += grid[i][y_cord];
+		}
+		i--;
+		
+	}
+	
+	for(j=y_cord, j< NUM_RANGE; j++)
+	{
+		while grid[x_cord][j] != NULL
+		{
+			word += grid[x_cord][j];
+		}
+		j++;
+		
+	}
+	
+	for(j=y_cord, j< NUM_RANGE; j--)
+	{
+		while grid[x_cord][j] != NULL
+		{
+			word += grid[x_cord][j];
+		}
+		j--;
+		
+	}
+}
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
 // UDP Server Functions
 void udpServer()
 {
@@ -473,6 +529,11 @@ int isOnBoard(int x , int y)
 void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
 {
   int addr_len;
+<<<<<<< HEAD
+=======
+  int isPlayerOne = 1;//true
+  int isPlayerTwo = 0;//false
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
 
 
   while (running)
@@ -532,8 +593,11 @@ void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
                   //isPlayerOne playing ?
                   if (isPlayerOne == 1)
                   {
+<<<<<<< HEAD
                     isWord(x,y);
 
+=======
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
                     isPlayerOne = 0;
                     strcpy(buf,"0");
                     addr_len = sizeof((*player1));
@@ -550,7 +614,10 @@ void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
                   //isPlayerTwo playing ?
                   else if(isPlayerTwo == 1)
                   {
+<<<<<<< HEAD
                     isWord(x,y);
+=======
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
                     isPlayerTwo = 0;
                     strcpy(buf,"0");
                     addr_len = sizeof((*player2));
@@ -604,6 +671,7 @@ void runningServer(struct sockaddr_in *player1,struct sockaddr_in *player2 )
   }
   close(sock_recv);
 }
+<<<<<<< HEAD
 
 char* isWord(int x , int y)
 {
@@ -751,3 +819,5 @@ int calculateScore(char *word)
 
   return score;
 }
+=======
+>>>>>>> e05afcff3c1fdb9e2a18982ac19879e118a3db31
